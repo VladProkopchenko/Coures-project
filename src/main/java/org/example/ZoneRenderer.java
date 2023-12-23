@@ -11,11 +11,6 @@ public class ZoneRenderer {
             shapeRenderer.set(ShapeRenderer.ShapeType.Filled);
             shapeRenderer.setColor(Color.GRAY);
             shapeRenderer.rect(zone.getX(),zone.getY(),zone.getWidth(),zone.getHeight());
-            /*shapeRenderer.rect(200,200,160,300);
-            shapeRenderer.rect(20,200,160,300);
-            shapeRenderer.rect(20,520,520,100);
-            shapeRenderer.rect(380,200,160,300);
-            shapeRenderer.rect(200,80,340,100);*/
         }
     }
 }

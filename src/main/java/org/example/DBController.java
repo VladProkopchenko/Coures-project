@@ -55,6 +55,40 @@ public class DBController {
 
         return inventory;
     }
+    public ArrayList<Inventory> selectInventoryByType(String type){
+        ArrayList<Inventory> inventory = new ArrayList<>();
+        String sqlQuery;
+        try{
+            if (furnitureTypes.contains(type)){
+                sqlQuery = "SELECT furniture.name, furniture.inventory_no, furniture.position_x, furniture.position_y, room.number \n" +
+                        "FROM furniture\n" +
+                        "JOIN room ON furniture.room_id = room.id\n" +
+                        "WHERE furniture.name = ?";
+            }else {
+                sqlQuery = "SELECT equipment.name, equipment.inventory_no, equipment.position_x, equipment.position_y, room.number \n" +
+                        "FROM equipment\n" +
+                        "JOIN room ON equipment.room_id = room.id\n" +
+                        "WHERE equipment.name = ?";
+            }
+            PreparedStatement statement = connection.prepareStatement(sqlQuery);
+            statement.setString(1,type);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()){
+                Inventory inventoryItem = new Inventory();
+                inventoryItem.setNumber(resultSet.getString("inventory_no"));
+                inventoryItem.setRoomNumber(resultSet.getInt("number"));
+                inventoryItem.setType(resultSet.getString("name"));
+                inventoryItem.setX(resultSet.getInt("position_x"));
+                inventoryItem.setY(resultSet.getInt("position_y"));
+                inventory.add(inventoryItem);
+            }
+            statement.close();
+            resultSet.close();
+        }catch (SQLException e){
+            System.out.println("Error: " + e.getMessage());
+        }
+        return inventory;
+    }
 
     public Inventory selectInventoryByNumber(String number) {
         Inventory inventoryItem = new Inventory();
@@ -93,15 +127,6 @@ public class DBController {
 
     public void insertFurnitureByNumber(String number, String roomNumber, String type, int x, int y) {
         try {
-           /* String query = "insert into furniture (number, type, room_number, position_x, position_y) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement statement = connection.prepareStatement(query);
-            statement.setString(1, number);
-            statement.setString(2, type);
-            statement.setInt(3, Integer.parseInt(roomNumber));
-            statement.setInt(4, Integer.parseInt(x));
-            statement.setInt(5, Integer.parseInt(y));
-            int rows = statement.executeUpdate();
-            statement.close();*/
             int id = 0;
             String sqlQuery = "SELECT id FROM room\n" +
                     "WHERE number = ?";
@@ -114,27 +139,19 @@ public class DBController {
             if(furnitureTypes.contains(type)){
                 sqlQuery = "INSERT INTO furniture (name,room_id,type_id,inventory_no,position_x,position_y,acceptance_year,working)\n" +
                         "VALUES(?,?,?,?,?,?,2020,true)";
-                statement = connection.prepareStatement(sqlQuery);
-                statement.setString(1,type);
-                statement.setInt(2,id);
-                statement.setInt(3,1);
-                statement.setString(4,number);
-                statement.setInt(5,x);
-                statement.setInt(6,y);
-                int rows = statement.executeUpdate();
             }
             else {
                 sqlQuery = "INSERT INTO equipment (name,room_id,type_id,inventory_no,position_x,position_y,acceptance_year,working)\n" +
                         "VALUES(?,?,?,?,?,?,2020,true)";
-                statement = connection.prepareStatement(sqlQuery);
-                statement.setString(1,type);
-                statement.setInt(2,id);
-                statement.setInt(3,1);
-                statement.setString(4,number);
-                statement.setInt(5,x);
-                statement.setInt(6,y);
-                int rows = statement.executeUpdate();
             }
+            statement = connection.prepareStatement(sqlQuery);
+            statement.setString(1,type);
+            statement.setInt(2,id);
+            statement.setInt(3,1);
+            statement.setString(4,number);
+            statement.setInt(5,x);
+            statement.setInt(6,y);
+            int rows = statement.executeUpdate();
             resultSet.close();
             statement.close();
         } catch (SQLException e) {
@@ -144,12 +161,20 @@ public class DBController {
 
     public void deleteFurnitureByNumber(String number) {
         try {
+            String furnitureQuery = "DELETE FROM furniture WHERE inventory_no = ?";
+            String equipmentQuery = "DELETE FROM equipment WHERE inventory_no = ?";
 
-            String sqlQuery = "DELETE FROM furniture\n" +
-                    "\tWHERE inventory_no = ?";
-            PreparedStatement statement = connection.prepareStatement(sqlQuery);
-            statement.setString(1,number);
-            int rows = statement.executeUpdate();
+            PreparedStatement statement = connection.prepareStatement(furnitureQuery);
+            statement.setString(1, number);
+            int furnitureRows = statement.executeUpdate();
+            statement.close();
+
+            PreparedStatement equipmentStatement = connection.prepareStatement(equipmentQuery);
+            equipmentStatement.setString(1, number);
+            int equipmentRows = equipmentStatement.executeUpdate();
+            equipmentStatement.close();
+
+            int totalRowsDeleted = furnitureRows + equipmentRows;
             statement.close();
         } catch (SQLException e) {
             System.out.println("Error " + e.getMessage());
